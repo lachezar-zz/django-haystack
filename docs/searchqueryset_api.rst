@@ -309,6 +309,31 @@ Example::
     # Count document hits for authors that start with 'jo' within the index.
     SearchQuerySet().filter(content='foo').query_facet('author', 'jo*')
 
+``spatial``
+~~~~~~~~~~~~~~~
+
+.. method:: SearchQuerySet.spatial(self, **kwargs)
+
+Adds spatial filter to the search. This feature works at the moment only with
+the Solr backend and must have the jteam spatial plugin installed:
+http://www.jteam.nl/news/spatialsolr
+
+In your ``SearchIndex`` latitude field **MUST** be lat and longitude field lng 
+
+The kwargs **MUST** have at least the lat, long and radius, where lat is the 
+latitude, long the longitude of the center search point. Radius is the distance from
+the center point where the search is limited. You can add the unit parameter to specified
+the unit in witch the distance will be calculated, default is miles supported values are km or miles 
+
+In the search results you get back, a geo_distance field will be added. This field
+is the distance of the result from the center of the search
+
+Example::
+
+    # Filter results within a 3km radius from the center point latitude 49.4338870
+    # longitude 1.0888390
+    SearchQuerySet().spatial(lat=49.4338870, long=1.0888390, radius=3, unit='km', )
+
 ``narrow``
 ~~~~~~~~~~
 

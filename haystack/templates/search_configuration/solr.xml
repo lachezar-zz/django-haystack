@@ -29,6 +29,7 @@
     <fieldType name="slong" class="solr.SortableLongField" sortMissingLast="true" omitNorms="true"/>
     <fieldType name="sfloat" class="solr.SortableFloatField" sortMissingLast="true" omitNorms="true"/>
     <fieldType name="sdouble" class="solr.SortableDoubleField" sortMissingLast="true" omitNorms="true"/>
+    <fieldType name="double" class="solr.TrieDoubleField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
 
     <fieldType name="date" class="solr.DateField" sortMissingLast="true" omitNorms="true"/>
 
@@ -76,6 +77,7 @@
     <dynamicField name="*_f"  type="sfloat"  indexed="true"  stored="true"/>
     <dynamicField name="*_d"  type="sdouble" indexed="true"  stored="true"/>
     <dynamicField name="*_dt" type="date"    indexed="true"  stored="true"/>
+    <dynamicField name="_tier_*" type="string" indexed="true" stored="true"/>
     
 {% for field in fields %}
     <field name="{{ field.field_name }}" type="{{ field.type }}" indexed="{{ field.indexed }}" stored="{{ field.stored }}" multiValued="{{ field.multi_valued }}" />
