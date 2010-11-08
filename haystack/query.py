@@ -38,7 +38,16 @@ class SearchQuerySet(object):
         len(self)
         obj_dict = self.__dict__.copy()
         obj_dict['_iter'] = None
+        del obj_dict['site']
         return obj_dict
+
+    def __setstate__(self, dict):
+        """
+        For unpickling.
+        """
+        self.__dict__ = dict
+        from haystack import site as main_site
+        self.site = main_site
     
     def __repr__(self):
         data = list(self[:REPR_OUTPUT_SIZE])
@@ -160,15 +169,16 @@ class SearchQuerySet(object):
         
         for result in results:
             if self._load_all:
-                # We have to deal with integer keys being cast from strings; if this
-                # fails we've got a character pk.
+                # We have to deal with integer keys being cast from strings
+                model_objects = loaded_objects.get(result.model, {})
+                if not result.pk in model_objects:
+                    try:
+                        result.pk = int(result.pk)
+                    except ValueError:
+                        pass
                 try:
-                    result.pk = int(result.pk)
-                except ValueError:
-                    pass
-                try:
-                    result._object = loaded_objects[result.model][result.pk]
-                except (KeyError, IndexError):
+                    result._object = model_objects[result.pk]
+                except KeyError:
                     # The object was either deleted since we indexed or should
                     # be ignored; fail silently.
                     self._ignored_result_count += 1
@@ -379,13 +389,11 @@ class SearchQuerySet(object):
     
     def count(self):
         """Returns the total number of matching results."""
-        clone = self._clone()
-        return len(clone)
+        return len(self)
     
     def best_match(self):
         """Returns the best/top search result that matches the query."""
-        clone = self._clone()
-        return clone[0]
+        return self[0]
     
     def latest(self, date_field):
         """Returns the most recent search result that matches the query."""
@@ -455,6 +463,9 @@ class EmptySearchQuerySet(SearchQuerySet):
     
     def _fill_cache(self, start, end):
         return False
+
+    def facet_counts(self):
+        return {}
 
 
 class RelatedSearchQuerySet(SearchQuerySet):
