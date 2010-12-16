@@ -119,11 +119,14 @@ class SearchField(object):
             raise SearchFieldError("This field requires either its instance_name variable to be populated or an explicit template_name in order to load the correct template.")
         
         if self.template_name is not None:
-            template_name = self.template_name
+            template_names = self.template_name
+            
+            if not isinstance(template_names, (list, tuple)):
+                template_names = [template_names]
         else:
-            template_name = 'search/indexes/%s/%s_%s.txt' % (obj._meta.app_label, obj._meta.module_name, self.instance_name)
+            template_names = ['search/indexes/%s/%s_%s.txt' % (obj._meta.app_label, obj._meta.module_name, self.instance_name)]
         
-        t = loader.get_template(template_name)
+        t = loader.select_template(template_names)
         return t.render(Context({'object': obj}))
     
     def convert(self, value):
@@ -292,6 +295,10 @@ class FacetField(SearchField):
     """
     instance_name = None
     
+    def __init__(self, **kwargs):
+        handled_kwargs = self.handle_facet_parameters(kwargs)
+        super(FacetField, self).__init__(**handled_kwargs)
+
     def handle_facet_parameters(self, kwargs):
         if kwargs.get('faceted', False):
             raise SearchFieldError("FacetField (%s) does not accept the 'faceted' argument." % self.instance_name)
@@ -321,57 +328,27 @@ class FacetField(SearchField):
         return self.facet_for or self.instance_name
 
 
-class FacetCharField(CharField, FacetField):
-    field_type = 'string'
+class FacetCharField(FacetField, CharField):
+    pass
     
-    def __init__(self, **kwargs):
-        handled_kwargs = self.handle_facet_parameters(kwargs)
-        super(FacetCharField, self).__init__(**handled_kwargs)
-
-
-class FacetIntegerField(IntegerField, FacetField):
-    field_type = 'integer'
+class FacetIntegerField(FacetField, IntegerField):
+    pass
     
-    def __init__(self, **kwargs):
-        handled_kwargs = self.handle_facet_parameters(kwargs)
-        super(FacetIntegerField, self).__init__(**handled_kwargs)
+class FacetFloatField(FacetField, FloatField):
+    pass
 
 
-class FacetFloatField(FloatField, FacetField):
-    field_type = 'float'
-    
-    def __init__(self, **kwargs):
-        handled_kwargs = self.handle_facet_parameters(kwargs)
-        super(FacetFloatField, self).__init__(**handled_kwargs)
+class FacetBooleanField(FacetField, BooleanField):
+    pass
 
 
-class FacetBooleanField(BooleanField, FacetField):
-    field_type = 'boolean'
-    
-    def __init__(self, **kwargs):
-        handled_kwargs = self.handle_facet_parameters(kwargs)
-        super(FacetBooleanField, self).__init__(**handled_kwargs)
+class FacetDateField(FacetField, DateField):
+    pass
 
 
-class FacetDateField(DateField, FacetField):
-    field_type = 'date'
-    
-    def __init__(self, **kwargs):
-        handled_kwargs = self.handle_facet_parameters(kwargs)
-        super(FacetDateField, self).__init__(**handled_kwargs)
+class FacetDateTimeField(FacetField, DateTimeField):
+    pass
 
 
-class FacetDateTimeField(DateTimeField, FacetField):
-    field_type = 'datetime'
-    
-    def __init__(self, **kwargs):
-        handled_kwargs = self.handle_facet_parameters(kwargs)
-        super(FacetDateTimeField, self).__init__(**handled_kwargs)
-
-
-class FacetMultiValueField(MultiValueField, FacetField):
-    field_type = 'string'
-    
-    def __init__(self, **kwargs):
-        handled_kwargs = self.handle_facet_parameters(kwargs)
-        super(FacetMultiValueField, self).__init__(**handled_kwargs)
+class FacetMultiValueField(FacetField, MultiValueField):
+    pass

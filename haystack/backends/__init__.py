@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.utils import tree
 from django.utils.encoding import force_unicode
-from haystack.constants import VALID_FILTERS, FILTER_SEPARATOR
+from haystack.constants import ID, DJANGO_CT, DJANGO_ID, VALID_FILTERS, FILTER_SEPARATOR
 from haystack.exceptions import SearchBackendError, MoreLikeThisError, FacetingError, SpatialError
 
 try:
@@ -299,7 +299,7 @@ class BaseSearchQuery(object):
         """For pickling."""
         obj_dict = self.__dict__.copy()
         del(obj_dict['backend'])
-        
+
         # Rip off the class bits as we'll be using this path when we go to load
         # the backend.
         obj_dict['backend_used'] = ".".join(str(self.backend).replace("<class '", "").replace("'>", "").split(".")[0:-1])
@@ -403,7 +403,7 @@ class BaseSearchQuery(object):
             # everything.
             if not self.end_offset:
                 self.end_offset = 10
-            
+
             if self._more_like_this:
                 # Special case for MLT.
                 self.run_mlt()
@@ -478,7 +478,7 @@ class BaseSearchQuery(object):
             query = self.matching_all_fragment()
 
         if len(self.models):
-            models = sorted(['django_ct:%s.%s' % (model._meta.app_label, model._meta.module_name) for model in self.models])
+            models = sorted(['%s:%s.%s' % (DJANGO_CT, model._meta.app_label, model._meta.module_name) for model in self.models])
             models_clause = ' OR '.join(models)
 
             if query != self.matching_all_fragment():
@@ -656,11 +656,11 @@ class BaseSearchQuery(object):
             'gap_amount': gap_amount,
         }
         self.date_facets[self.backend.site.get_facet_field_name(field)] = details
-    
+
     def add_query_facet(self, field, query):
         """Adds a query facet on a field."""
         self.query_facets.append((self.backend.site.get_facet_field_name(field), query))
-    
+
     def add_narrow_query(self, query):
         """
         Narrows a search to a subset of all documents per the query.
