@@ -61,6 +61,10 @@ class SearchQuerySet(object):
         if not self._result_count:
             self._result_count = self.query.get_count()
 
+            # Some backends give weird, false-y values here. Convert to zero.
+            if not self._result_count:
+                self._result_count = 0
+        
         # This needs to return the actual number of hits, not what's in the cache.
         return self._result_count - self._ignored_result_count
 
@@ -131,8 +135,8 @@ class SearchQuerySet(object):
         self.query._reset()
         self.query.set_limits(start, end)
         results = self.query.get_results()
-
-        if len(results) == 0:
+        
+        if results == None or len(results) == 0:
             return False
 
         # Setup the full cache now that we know how many results there are.
