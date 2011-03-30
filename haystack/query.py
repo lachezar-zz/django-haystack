@@ -1,3 +1,4 @@
+import operator
 import re
 import warnings
 from django.conf import settings
@@ -298,6 +299,17 @@ class SearchQuerySet(object):
 
         return clone
 
+    def result_class(self, klass):
+        """
+        Allows specifying a different class to use for results.
+        
+        Overrides any previous usages. If ``None`` is provided, Haystack will
+        revert back to the default ``SearchResult`` object.
+        """
+        clone = self._clone()
+        clone.query.set_result_class(klass)
+        return clone
+
     def boost(self, term, boost):
         """Boosts a certain aspect of the query."""
         clone = self._clone()
@@ -391,7 +403,27 @@ class SearchQuerySet(object):
                 clone = clone.filter(content=cleaned_keyword)
 
         return clone
-
+    
+    def autocomplete(self, **kwargs):
+        """
+        A shortcut method to perform an autocomplete search.
+        
+        Must be run against fields that are either ``NgramField`` or
+        ``EdgeNgramField``.
+        """
+        clone = self._clone()
+        query_bits = []
+        
+        for field_name, query in kwargs.items():
+            for word in query.split(' '):
+                bit = clone.query.clean(word.strip())
+                kwargs = {
+                    field_name: bit,
+                }
+                query_bits.append(SQ(**kwargs))
+        
+        return clone.filter(reduce(operator.__and__, query_bits))
+    
     # Methods that do not return a SearchQuerySet.
 
     def count(self):
