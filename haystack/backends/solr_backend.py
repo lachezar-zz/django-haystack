@@ -347,6 +347,8 @@ class SearchBackend(BaseSearchBackend):
                 field_data['type'] = 'ngram'
             elif field_class.field_type == 'edge_ngram':
                 field_data['type'] = 'edge_ngram'
+            elif field_class.field_type == 'location':
+                field_data['type'] = 'location'
             
             if field_class.is_multivalued:
                 field_data['multi_valued'] = 'true'
@@ -387,6 +389,7 @@ class SearchQuery(BaseSearchQuery):
         return '*:*'
 
     def build_query_fragment(self, field, filter_type, value):
+        print value
         result = ''
         
         if not isinstance(value, (list, tuple)):
@@ -413,6 +416,11 @@ class SearchQuery(BaseSearchQuery):
                 'startswith': "%s:%s*",
             }
             
+            spatial_filter_types = {
+                'within': "_query_:\"{!geofilt pt=%f,%f sfield=%s d=%f}\"",
+                'bbcontains': "_query_:\"{!bbox pt=%f,%f sfield=%s d=%f}\"",
+            }
+            
             if filter_type == 'in':
                 in_options = []
                 
@@ -424,6 +432,8 @@ class SearchQuery(BaseSearchQuery):
                 start = self.backend.conn._from_python(value[0])
                 end = self.backend.conn._from_python(value[1])
                 return "%s:[%s TO %s]" % (index_fieldname, start, end)
+            elif filter_type in spatial_filter_types.keys():
+                result = spatial_filter_types[filter_type] % (value[1], value[0], index_fieldname, value[2])
             else:
                 result = filter_types[filter_type] % (index_fieldname, value)
         
@@ -468,10 +478,6 @@ class SearchQuery(BaseSearchQuery):
         
         if spelling_query:
             kwargs['spelling_query'] = spelling_query
-            
-        if self.spatial_query:
-            spatial = ' '.join([ '%s=%s' % (k,v) for k,v in self.spatial_query.items()])
-            final_query = '{!spatial %s}%s' % (spatial, final_query)
         
         results = self.backend.search(final_query, **kwargs)
         self._results = results.get('results', [])

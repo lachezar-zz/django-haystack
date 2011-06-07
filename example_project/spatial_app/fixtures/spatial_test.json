@@ -1,0 +1,20 @@
+[
+    {"pk": 1, "model": "spatial_app.spatialtest", "fields": 
+        {
+            "position": "11.11,22.22", 
+            "name": "test 1"
+        }
+    },
+    {"pk": 2, "model": "spatial_app.spatialtest", "fields": 
+        {
+            "position": "10.11,21.22", 
+            "name": "test 2"
+        }
+    },
+    {"pk": 3, "model": "spatial_app.spatialtest", "fields": 
+        {
+            "position": "12.1,23.22", 
+            "name": "test 3"
+        }
+    }
+]

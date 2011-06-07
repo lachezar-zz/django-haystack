@@ -157,6 +157,33 @@ class CharField(SearchField):
         
         return unicode(value)
 
+class LocationField(SearchField):
+    field_type = 'location'
+    
+    def __init__(self, **kwargs):
+        if kwargs.get('faceted') is True:
+            raise SearchFieldError("%s can not be faceted." % self.__class__.__name__)
+        
+        super(LocationField, self).__init__(**kwargs)
+		
+    def prepare(self, obj):
+        return self.convert(super(LocationField, self).prepare(obj))
+    
+    def convert(self, value):
+        if value is None:
+            return None
+        
+        #return u'%f,%f' % (value[0], value[1])
+        return unicode(value)
+    
+    '''def prepare(self, obj):
+        return self.convert(super(LocationField, self).prepare(obj))
+    
+    def convert(self, lon, lat):
+        if value is None:
+            return None
+        
+        return unicode('%f,%f' % (lon, lat))'''
 
 class NgramField(CharField):
     field_type = 'ngram'
